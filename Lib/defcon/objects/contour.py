@@ -134,6 +134,16 @@ class Contour(BaseObject):
         return len(self._points)
 
     def __getitem__(self, index):
+        if isinstance(index, slice):
+            if index.start > len(self._points):
+                raise IndexError
+            if index.stop is None:
+                stop = len(self._points)
+            elif index.stop > len(self._points):
+                raise IndexError
+            else:
+                stop = index.stop
+            return self._points[index.start:stop]
         if index > len(self._points):
             raise IndexError
         return self._points[index]
@@ -226,6 +236,28 @@ class Contour(BaseObject):
         Get the index for **point**.
         """
         return self._points.index(point)
+    
+    def insertPoint(self, index, point):
+        """
+        Insert **point** into the contour at index. The point
+        must be a defcon :class:`Point` object or a subclass
+        of that object. An error will be raised if the point's
+        identifier conflicts with any of the identifiers within
+        the glyph.
+        This will post a *Contour.Changed* notification.
+        """
+        assert(point not in self._points)
+        self._points.insert(index, point)
+        self.dirty = True
+    
+    def removePoint(self, point):
+        """
+        Remove **point** from the contour.
+
+        This will post a *Contour.Changed* notification.
+        """
+        self._points.remove(point)
+        self.dirty = True
 
     def setStartPoint(self, index):
         """
